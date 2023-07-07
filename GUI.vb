@@ -70,7 +70,7 @@ Public Class GUI
 
         ' зберігання файлу
         htmlSave.DocumentNode.AppendChild(rootUl)
-        savePath += saveName + ".html"
+        savePath += "\" + saveName + ".html"
         htmlSave.Save(savePath)
 
 
