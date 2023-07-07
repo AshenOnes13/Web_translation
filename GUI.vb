@@ -17,32 +17,36 @@ Public Class GUI
     Dim NamesList As New List(Of String)    'перелік назв сторінок
 
 
+    'збереження html файлів з використанням Chrome та бібліотеки Selenium
     Public Sub SavePageAsHtml(url As String, savePath As String, saveName As String)
 
-        Dim options As New ChromeOptions()
-        Dim isDisplayed As Boolean = False
-        Dim rootUl As HtmlNode
+        Dim options As New ChromeOptions()      'ініціалізація виклику браузера та опцій виклику
+        Dim isDisplayed As Boolean = False      'змінна для перевірки відображення необхідного елементу сторінки
+        Dim rootUl As HtmlNode                  'вузол з вмістом текстової частини сторінки
 
-        Dim htmlDoc As New HtmlDocument()
-        Dim htmlSave As New HtmlDocument()
+        Dim htmlDoc As New HtmlDocument()       'документ, що відкривається у браузері
+        Dim htmlSave As New HtmlDocument()      'зберігаємий документ тільки з текстовою частиною
 
-        ' options.AddArgument("--headless") ' Run Chrome in headless mode (without GUI)
-        Dim driver As New ChromeDriver(options)
+        ' options.AddArgument("--headless")     'опція Chrome для зупуску без відображення інтерфейсу
+        Dim driver As New ChromeDriver(options) 'запуск Chrome
 
+        Dim counter As Integer = 0              'змінна для контролю кількості циклів очікування
+
+        'перехід за посиланням
         driver.Navigate().GoToUrl(url)
 
         ' Wait for the page to load 
         Threading.Thread.Sleep(1000)
 
-
+        'функція перевірки наявності відображення необхідного елементу, який містить текстову частину
         While isDisplayed = False
 
-            ' Capture the rendered HTML
+            'отримання поточного html
             Dim html As String = driver.PageSource
             htmlDoc.LoadHtml(html)
-
+            'обирання вузла з текстом
             rootUl = htmlDoc.DocumentNode.SelectSingleNode("//div[@class='body_content']")
-
+            'перевірка на наявність вмісту
             If rootUl IsNot Nothing Then
                 isDisplayed = True
             Else
@@ -50,9 +54,21 @@ Public Class GUI
                 Threading.Thread.Sleep(1000)
             End If
 
+            'перезавантаження сторінки
+            If counter > 10 Then
+                driver.Navigate().GoToUrl(url)
+            End If
+
+            'примусовий вихід з циклу
+            If counter > 20 Then
+                Exit While
+            End If
+
+            counter += 1
         End While
 
-        ' Save the HTML to a file
+
+        ' зберігання файлу
         htmlSave.DocumentNode.AppendChild(rootUl)
         savePath += saveName + ".html"
         htmlSave.Save(savePath)
@@ -62,52 +78,48 @@ Public Class GUI
         driver.Quit()
     End Sub
 
-    Private Sub Save_page_button_Click(sender As Object, e As EventArgs) Handles Save_page_button.Click
 
-        SavePageAsHtml("https://help.autodesk.com/view/fusion360/ENU/?guid=Update_Desktop_Connector", "d:\test\", "asd")
-
-    End Sub
-
-
-
+    'рекурсивний пошук вкладених елементів
     Private Shared Function GetPathList(node As HtmlNode, Optional parentPath As String = "") As (List(Of String), List(Of String), List(Of String))
+        'оголошення відповідних переліків для парсингу
         Dim pathList_f As New List(Of String)()
         Dim LinksList_f As New List(Of String)()
         Dim NamesList_f As New List(Of String)()
+        'ім'я поточного вузла
         Dim nodeText As String
 
-        ' Get the text of the current node
-
-
+        'отримання колекції вузлів поточного вузла для пошуку елементу, який відповідає за ім'я
         Dim Childs_nodes As HtmlNodeCollection = node.ChildNodes
-
+        'обирання необхідного вузла
         Dim selectedNode As HtmlNode = Childs_nodes.FirstOrDefault(Function(n) n.Name = "a")
+        'заміна заборонених у назвах файлу символів
+        nodeText = Regex.Replace(selectedNode.InnerText.Trim(), "[<>:""/\|?*]", "")
 
-        nodeText = selectedNode.InnerText.Trim().Replace(":", "")
-
-
+        'пошук атрібуту, у якому знаходиться посилання, якщо його немає, то призначеється значення "null"
         Dim dataUrlValue As String = selectedNode.GetAttributeValue("data-url", "null")
-
+        'додавання "шапки" перед посиланням
         If dataUrlValue IsNot "null" Then
             dataUrlValue = ("https://help.autodesk.com" & dataUrlValue)
         End If
 
+        'запис посилання у перелік
         LinksList_f.Add(dataUrlValue)
-
+        'запис імені файлу у перелік
         NamesList_f.Add(nodeText)
-
-        ' Build the path by appending the current node text to the parent path
+        'накопичувальна змінна, яка формує повний шлях за ієрархією
+        'перевірка, чи порожнє значення попередньої вкладеності. Якщо так, то додавання назви вузлу, у іншому випадку - додавання назви поточного вузла до ієрархії
         Dim path As String = If(String.IsNullOrEmpty(parentPath), nodeText, parentPath & "\" & nodeText)
 
-        ' Add the path to the path list
+        'запис шляху у перелік
         pathList_f.Add(path)
 
-        ' Recursively process the child nodes
+        'рекурсивний пошук на наявність вкладений вузлів
         For Each child As HtmlNode In Childs_nodes
+            'перевірка наявності вкладеності
             If child.Name = "ul" Then
 
                 Dim Childs_UL As HtmlNodeCollection = child.ChildNodes
-
+                'пошук вкладених вузлів
                 For Each node_ul As HtmlNode In Childs_UL
                     If node_ul.Name = "li" Then
                         pathList_f.AddRange(GetPathList(node_ul, path).Item1)
@@ -119,12 +131,14 @@ Public Class GUI
             End If
         Next
 
+        ' повернення сформованих переліків
         Return (pathList_f, LinksList_f, NamesList_f)
     End Function
 
 
-
+    'функція пошуку коренних вузлів переліку у html документі
     Public Shared Function ConvertToPathList(html As String) As (List(Of String), List(Of String), List(Of String))
+        'оголошення відповідних переліків для парсингу
         Dim pathList_f As New List(Of String)()
         Dim linksList_f As New List(Of String)()
         Dim NamesList_f As New List(Of String)()
@@ -133,14 +147,13 @@ Public Class GUI
         Dim htmlDoc As New HtmlDocument()
         htmlDoc.LoadHtml(html)
 
-        ' Get the root <ul> element
+        ' отримання початкового елементу вкладеного переліку
         Dim rootUl As HtmlNode = htmlDoc.DocumentNode.SelectSingleNode("//ul[@class='node-tree']")
 
-        '   Dim rootUl As HtmlNodeCollection = htmlDoc.DocumentNode.SelectNodes("//ul[@class='node-tree']")
-
+        'отримання коренних вузлів переліку
         Dim Childs_nodes As HtmlNodeCollection = rootUl.ChildNodes
 
-
+        'для кожного вузла, виклик рекурсивного пошуку, якщо вузол має необхідку назву
         For Each node As HtmlNode In Childs_nodes
             If node.Name = "li" Then
                 pathList_f.AddRange(GetPathList(node).Item1)
@@ -149,20 +162,27 @@ Public Class GUI
             End If
         Next
 
-        ' Process the root <ul> element
+        ' повернення сформованих переліків
         Return (pathList_f, linksList_f, NamesList_f)
 
     End Function
 
-
+    'функція вичитування html файлу та побудови шляхів для файлів/папок
     Sub parse_links()
 
-        Dim htmlContent As String
-        Dim myList As New List(Of String)()
-        Dim modifiedString As String
+        Dim htmlContent As String               'документ, що обробляється
+        Dim myList As New List(Of String)()     'тимчасовий перелік шляхів для видалення останньої частини
+        Dim modifiedString As String            'змінений рядок шляху, без назви файлу
+
         ' Dim filePath As String = "D:\Work\Programing\2023_07_Trans_web\links_test.html"
         Dim filePath As String = "D:\Work\Programing\2023_07_Trans_web\links2.html"
 
+        'діалог відкриття файлу
+        If OpenFileDialog1.ShowDialog = DialogResult.OK Then
+            filePath = OpenFileDialog1.FileName
+        End If
+
+        'очищення переліків
         pathList.Clear()
         linksList.Clear()
         NamesList.Clear()
@@ -173,26 +193,23 @@ Public Class GUI
             htmlContent = reader.ReadToEnd()
         End Using
 
+        'виклик рекурсивної функції парсингу 
         pathList = ConvertToPathList(htmlContent).Item1
         linksList = ConvertToPathList(htmlContent).Item2
         NamesList = ConvertToPathList(htmlContent).Item3
 
+
         Dim count_rows As Integer = pathList.Count
 
-        'If count_rows > 0 Then
-        '    For i = 0 To count_rows - 1
-        '        modifiedString = pathList(i).Replace(NamesList(i), "")
-        '        myList.Add(modifiedString)
-        '    Next
-        'End If
-
+        'видалення із переліку шляхів назв файлів
         If count_rows > 0 Then
             For i = 0 To count_rows - 1
-
+                'пошук останнього індексу входження розділяючого символу
                 Dim index As Integer = pathList(i).LastIndexOf("\")
+                'підрахунок довжини, що залишається
                 Dim charactersToRemove As Integer = pathList(i).Length - index
                 If index > 0 Then
-                    ' Delete the substring from the beginning of the string up to the symbol
+                    'аидалення зайвої частини
                     modifiedString = pathList(i).Remove(index, charactersToRemove)
                     myList.Add(modifiedString)
                 Else
@@ -200,37 +217,37 @@ Public Class GUI
                     myList.Add(modifiedString)
                 End If
 
-                '      Console.WriteLine(pathList(i) & " ||| " & modifiedString)
             Next
         End If
 
-
+        'оновленя переліку модифікованими шляхами
         pathList = myList
 
     End Sub
 
 
-
+    'функція відображення переліку кореневих папок
     Sub draw_checkbox()
 
         Dim count_rows As Integer
         Dim modifiedString As String
         Dim myList As New List(Of String)
 
-
         count_rows = pathList.Count
-
 
         If count_rows > 0 Then
             For i = 0 To count_rows - 1
 
+                'пошук індексу першого входження символу \, який поділяє шлях на папки
                 Dim index As Integer = pathList(i).IndexOf("\")
+                'підрахунок довжини символів, яку треба видалити після символу
                 Dim charactersToRemove As Integer = pathList(i).Length - index
                 If index > 0 Then
-                    ' Delete the substring from the beginning of the string up to the symbol
+                    'видалення зайвих символів
                     modifiedString = pathList(i).Remove(index, charactersToRemove)
                     myList.Add(modifiedString)
                 Else
+                    'якщо це коренева папка, то залишається такою ж
                     modifiedString = pathList(i)
                     myList.Add(modifiedString)
                 End If
@@ -238,25 +255,29 @@ Public Class GUI
             Next
         End If
 
+        'створення унікального переліку імен
         myList = myList.Distinct().ToList()
 
+        'очищення попереднього переліку
+        CheckedListBox1.Items.Clear()
+
+        'створення пункту у CheckedListBox для кожного імені
         For Each n In myList
             If n <> "" Then
                 CheckedListBox1.Items.Add(n)
             End If
-
         Next
-
 
     End Sub
 
 
-
+    'операція створення бібліотеки папок
     Sub Create_folders(start_folder As String)
 
         Dim myList As New List(Of String)()
         Dim roots_list As New List(Of String)()
 
+        'створення унікального переліку шляхів
         myList = pathList.Distinct().ToList()
 
         For Each path As String In myList
@@ -269,11 +290,18 @@ Public Class GUI
     'запуск вичитування файлу з посиланнями та відображення переліку кореневих папок 
     Private Sub Parse_links_button_Click(sender As Object, e As EventArgs) Handles Parse_links_button.Click
 
-        parse_links()
-        draw_checkbox()
+        parse_links()       'розбирання посилань
+        draw_checkbox()     'відображення чекбоксу
 
     End Sub
 
+
+    'тестовий виклик збереження певного файлу за певним посиланням
+    Private Sub Save_page_button_Click(sender As Object, e As EventArgs) Handles Save_page_button.Click
+
+        SavePageAsHtml("https://help.autodesk.com/view/fusion360/ENU/?guid=Update_Desktop_Connector", "d:\test\", "asd")
+
+    End Sub
 
 
     'окремий запуск створення каталогу папок
@@ -303,7 +331,7 @@ Public Class GUI
             If count_rows > 0 Then
                 For i = 0 To count_rows - 1
                     If linksList(i) IsNot "null" Then
-                        SavePageAsHtml(linksList(i), FolderBrowserDialog1.SelectedPath & "\" & pathList(i), NamesList(i))
+                        SavePageAsHtml(linksList(i), FolderBrowserDialog1.SelectedPath & "\" & pathList(i), NamesList(i))       'виклик збереження сторінок
 
                         'індикація процесу
                         ProgressBar1.Value = Math.Round(100 * (i + 1) / count_rows)

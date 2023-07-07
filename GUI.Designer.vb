@@ -30,6 +30,7 @@ Partial Class GUI
         Me.ProgressBar1 = New System.Windows.Forms.ProgressBar()
         Me.Label1 = New System.Windows.Forms.Label()
         Me.CheckedListBox1 = New System.Windows.Forms.CheckedListBox()
+        Me.OpenFileDialog1 = New System.Windows.Forms.OpenFileDialog()
         Me.SuspendLayout()
         '
         'Save_page_button
@@ -102,6 +103,10 @@ Partial Class GUI
         Me.CheckedListBox1.Size = New System.Drawing.Size(169, 244)
         Me.CheckedListBox1.TabIndex = 6
         '
+        'OpenFileDialog1
+        '
+        Me.OpenFileDialog1.FileName = "OpenFileDialog1"
+        '
         'GUI
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -130,4 +135,5 @@ Partial Class GUI
     Friend WithEvents ProgressBar1 As ProgressBar
     Friend WithEvents Label1 As Label
     Friend WithEvents CheckedListBox1 As CheckedListBox
+    Friend WithEvents OpenFileDialog1 As OpenFileDialog
 End Class
