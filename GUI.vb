@@ -55,7 +55,7 @@ Public Class GUI
             End If
 
             'перезавантаження сторінки
-            If counter > 10 Then
+            If counter = 10 Then
                 driver.Navigate().GoToUrl(url)
             End If
 
