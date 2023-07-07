@@ -12,9 +12,9 @@ Imports System.Text.RegularExpressions
 
 Public Class GUI
 
-    Dim pathList As New List(Of String)
-    Dim linksList As New List(Of String)
-    Dim NamesList As New List(Of String)
+    Dim pathList As New List(Of String)     'перелік шляхів всіх сторінок
+    Dim linksList As New List(Of String)    'перелік посилань на сайт https://help.autodesk.com/
+    Dim NamesList As New List(Of String)    'перелік назв сторінок
 
 
     Public Sub SavePageAsHtml(url As String, savePath As String, saveName As String)
@@ -209,25 +209,6 @@ Public Class GUI
 
     End Sub
 
-    Private Sub Parse_links_button_Click(sender As Object, e As EventArgs) Handles Parse_links_button.Click
-
-        parse_links()
-        draw_checkbox()
-    End Sub
-
-    Sub Create_folders(start_folder As String)
-
-        Dim myList As New List(Of String)()
-        Dim roots_list As New List(Of String)()
-
-        myList = pathList.Distinct().ToList()
-
-        For Each path As String In myList
-            Directory.CreateDirectory(start_folder & "\" & path)
-        Next
-
-    End Sub
-
 
 
     Sub draw_checkbox()
@@ -271,6 +252,31 @@ Public Class GUI
 
 
 
+    Sub Create_folders(start_folder As String)
+
+        Dim myList As New List(Of String)()
+        Dim roots_list As New List(Of String)()
+
+        myList = pathList.Distinct().ToList()
+
+        For Each path As String In myList
+            Directory.CreateDirectory(start_folder & "\" & path)
+        Next
+
+    End Sub
+
+
+    'запуск вичитування файлу з посиланнями та відображення переліку кореневих папок 
+    Private Sub Parse_links_button_Click(sender As Object, e As EventArgs) Handles Parse_links_button.Click
+
+        parse_links()
+        draw_checkbox()
+
+    End Sub
+
+
+
+    'окремий запуск створення каталогу папок
     Private Sub Create_folder_button_Click(sender As Object, e As EventArgs) Handles Create_folder_button.Click
 
         If FolderBrowserDialog1.ShowDialog() = DialogResult.OK Then
@@ -279,22 +285,27 @@ Public Class GUI
 
     End Sub
 
+
+    'запуск вичитки з файлу, створення папок та збереження сторінок
     Private Sub Run_all_Click(sender As Object, e As EventArgs) Handles Run_all.Click
 
         Dim count_rows As Integer
 
-        parse_links()
+        parse_links()       'розбір файлу з посиланнями
 
         count_rows = pathList.Count
 
+        'створення каталогу папок на основі отриманного файлу
         If FolderBrowserDialog1.ShowDialog() = DialogResult.OK Then
             Create_folders(FolderBrowserDialog1.SelectedPath)
 
+            'для кожного рядка виконання функції зберігання файлу
             If count_rows > 0 Then
                 For i = 0 To count_rows - 1
                     If linksList(i) IsNot "null" Then
                         SavePageAsHtml(linksList(i), FolderBrowserDialog1.SelectedPath & "\" & pathList(i), NamesList(i))
 
+                        'індикація процесу
                         ProgressBar1.Value = Math.Round(100 * (i + 1) / count_rows)
                         Label1.Text = CStr((i + 1) & " / " & count_rows)
 
@@ -303,18 +314,6 @@ Public Class GUI
                     End If
                 Next
             End If
-
-        End If
-
-
-    End Sub
-
-    Private Sub CheckedListBox1_Click(sender As Object, e As EventArgs) Handles CheckedListBox1.Click
-
-        If CheckedListBox1.Items.Count = 0 Then
-
-            draw_checkbox()
-
         End If
 
     End Sub
