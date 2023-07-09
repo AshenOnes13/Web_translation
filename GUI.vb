@@ -1,5 +1,5 @@
 ﻿Imports System.IO
-Imports System.Net
+Imports System.Text
 Imports HtmlAgilityPack
 
 Imports System.Collections.Generic
@@ -10,11 +10,126 @@ Imports OpenQA.Selenium.Support.UI
 
 Imports System.Text.RegularExpressions
 
+Imports Google.Cloud.Translation.V2
+
+Imports MySql.Data.MySqlClient
+
 Public Class GUI
 
     Dim pathList As New List(Of String)     'перелік шляхів всіх сторінок
     Dim linksList As New List(Of String)    'перелік посилань на сайт https://help.autodesk.com/
     Dim NamesList As New List(Of String)    'перелік назв сторінок
+
+    Const GoogleCloudApiKey = "AIzaSyA_lbC-g1PfLkg6nskzmd0tJ0NagGhQ-D0"
+
+    Dim connectionString As String = "server=localhost;user=lostsoul;password=elparol3572765;database=fusion_translate_db;"
+
+    Sub start_import(filePath As String, link As String)
+
+        Dim connection As New MySqlConnection(connectionString)
+        Dim Filename As String
+        connection.Open()
+
+        '  Dim query As String = "SELECT * FROM `wp_posts` ORDER BY `post_title` ASC;"
+
+        Dim htmlContent As String               'документ, що обробляється
+
+
+        ' If OpenFileDialog1.ShowDialog = DialogResult.OK Then
+        '  filePath = OpenFileDialog1.FileName
+        '  Filename = OpenFileDialog1.SafeFileName
+
+
+        Using reader1 As New StreamReader(filePath, Encoding.Default)
+                ' Read the entire contents of the file
+                htmlContent = reader1.ReadToEnd()
+            End Using
+
+            Dim htmlDoc As New HtmlDocument()
+            htmlDoc.LoadHtml(htmlContent)
+
+            ' отримання початкового елементу вкладеного переліку
+            Dim rootUl As HtmlNode = htmlDoc.DocumentNode.SelectSingleNode("//h1[@itemprop='name']")
+
+            Filename = rootUl.InnerText
+
+
+            Dim ID As String = "NULL"
+            Dim post_author As String = 1
+            Dim post_date As String = "2023-07-01 21:27:58"
+            Dim post_date_gmt As String = "2023-07-01 21:27:58"
+            Dim post_content As String = htmlContent
+            Dim post_title As String = Filename
+            Dim post_excerpt As String = ""
+            Dim post_status As String = "publish"
+            Dim comment_status As String = "closed"
+            Dim ping_status As String = "closed"
+            Dim post_password As String = ""
+            Dim post_name As String = link
+            Dim to_ping As String = ""
+            Dim pinged As String = ""
+            Dim post_modified As String = "2023-07-01 21:27:58"
+            Dim post_modified_gmt As String = "2023-07-01 21:27:58"
+            Dim post_content_filtered As String = ""
+            Dim post_parent As String = "7"
+            Dim guid As String = ""
+            Dim menu_order As String = "0"
+            Dim post_type As String = "page"
+            Dim post_mime_type As String = ""
+            Dim comment_count As String = "0"
+
+
+
+            Dim query As String = "INSERT INTO `wp_posts` (`ID`, `post_author`, `post_date`, `post_date_gmt`, `post_content`, `post_title`, `post_excerpt`, `post_status`, `comment_status`, `ping_status`, `post_password`, `post_name`, `to_ping`, `pinged`, `post_modified`, `post_modified_gmt`, `post_content_filtered`, `post_parent`, `guid`, `menu_order`, `post_type`, `post_mime_type`, `comment_count`) 
+    VALUES (" & ID & ", '" & post_author & "', '" & post_date & "', '" & post_date_gmt & "', '" & post_content & "', '" & post_title & "', '" & post_excerpt & "', '" & post_status & "', '" & comment_status & "', '" & ping_status & "', '" & post_password & "', '" & post_name & "', '" & to_ping & "', '" & pinged & "', '" & post_modified & "', '" & post_modified_gmt & "', '" & post_content_filtered & "', '" & post_parent & "', '" & guid & "', '" & menu_order & "', '" & post_type & "', '" & post_mime_type & "', '" & comment_count & "');"
+
+            Dim command As New MySqlCommand(query, connection)
+            Dim reader As MySqlDataReader = command.ExecuteReader()
+
+            reader.Close()
+
+
+
+        ' End If
+
+    End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+
+    Sub translate(htmlContent As String, savePath As String)
+
+        'ініціалізація перекладача
+        Dim translateClient As TranslationClient        'перекладач
+        Dim response As TranslationResult               'місце для зберігання результату перекладу
+        Dim temp_row As String
+        Dim htmlSave As New HtmlDocument()
+        translateClient = TranslationClient.CreateFromApiKey(GoogleCloudApiKey)
+
+
+        response = translateClient.TranslateHtml(htmlContent, LanguageCodes.Ukrainian)
+
+        temp_row = response.TranslatedText
+
+
+        ' зберігання файлу
+        htmlSave.LoadHtml(temp_row)
+
+        htmlSave.Save(savePath)
+
+
+    End Sub
+
+
 
 
     'збереження html файлів з використанням Chrome та бібліотеки Selenium
@@ -70,6 +185,14 @@ Public Class GUI
 
         ' зберігання файлу
         htmlSave.DocumentNode.AppendChild(rootUl)
+
+        Dim nodeToDelete As HtmlNode = htmlSave.DocumentNode.SelectSingleNode("//div[@data-type='Sharing']")
+
+        If nodeToDelete IsNot Nothing Then
+            ' Delete the node
+            nodeToDelete.Remove()
+        End If
+
         savePath += "\" + saveName + ".html"
         htmlSave.Save(savePath)
 
@@ -174,8 +297,8 @@ Public Class GUI
         Dim myList As New List(Of String)()     'тимчасовий перелік шляхів для видалення останньої частини
         Dim modifiedString As String            'змінений рядок шляху, без назви файлу
 
-        ' Dim filePath As String = "D:\Work\Programing\2023_07_Trans_web\links_test.html"
-        Dim filePath As String = "D:\Work\Programing\2023_07_Trans_web\links2.html"
+        Dim filePath As String = "D:\Work\Programing\2023_07_Trans_web\links_test.html"
+        ' Dim filePath As String = "D:\Work\Programing\2023_07_Trans_web\links2.html"
 
         'діалог відкриття файлу
         If OpenFileDialog1.ShowDialog = DialogResult.OK Then
@@ -275,7 +398,6 @@ Public Class GUI
     Sub Create_folders(start_folder As String)
 
         Dim myList As New List(Of String)()
-        Dim roots_list As New List(Of String)()
 
         'створення унікального переліку шляхів
         myList = pathList.Distinct().ToList()
@@ -346,5 +468,108 @@ Public Class GUI
 
     End Sub
 
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+
+        Dim files_count As Integer
+        Dim cur_file As Integer = 0
+        Dim htmlContent As String
+        Dim save_path As String
+
+
+        'діалог відкриття файлу
+        If FolderBrowserDialog1.ShowDialog() = DialogResult.OK Then
+
+
+            Dim allFiles As IEnumerable(Of String) = Directory.EnumerateFiles(FolderBrowserDialog1.SelectedPath, "*.html", SearchOption.AllDirectories)
+            Dim filePaths As IList(Of String) = allFiles.ToList()
+
+            Create_folders(FolderBrowserDialog1.SelectedPath & "_ukrainian")
+
+
+            files_count = filePaths.Count
+
+            If files_count = 0 Then
+                MessageBox.Show("File not found")
+            Else
+                For Each filePath As String In filePaths
+
+                    Label1.Text = CStr((cur_file + 1) & " / " & files_count)
+
+                    Using reader As New StreamReader(filePath)
+                        ' Read the entire contents of the file
+                        htmlContent = reader.ReadToEnd()
+                    End Using
+
+                    Dim pattern As String = FolderBrowserDialog1.SelectedPath & "\"
+                    Dim replacement As String = FolderBrowserDialog1.SelectedPath & "_ukrainian\"
+
+                    save_path = filePath.Replace(pattern, replacement)
+
+                    translate(htmlContent, save_path)
+
+                    cur_file += 1
+
+                    Application.DoEvents()
+
+                Next
+            End If
+
+        End If
+
+
+
+    End Sub
+
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+
+        Dim files_count As Integer
+        Dim cur_file As Integer = 0
+        Dim rowcount As Integer
+        Dim link As String
+
+
+        'діалог відкриття файлу
+        If FolderBrowserDialog1.ShowDialog() = DialogResult.OK Then
+
+
+            Dim allFiles As IEnumerable(Of String) = Directory.EnumerateFiles(FolderBrowserDialog1.SelectedPath, "*.html", SearchOption.AllDirectories)
+            Dim filePaths As IList(Of String) = allFiles.ToList()
+
+            Create_folders(FolderBrowserDialog1.SelectedPath & "_ukrainian")
+
+            files_count = filePaths.Count
+            rowcount = NamesList.Count
+
+            If files_count = 0 Then
+                MessageBox.Show("File not found")
+            Else
+                For Each filePath As String In filePaths
+
+                    Label1.Text = CStr((cur_file + 1) & " / " & files_count)
+
+
+                    For i = 0 To rowcount - 1
+
+
+
+
+                    Next
+
+
+                    start_import(filePath, link)
+
+                    cur_file += 1
+
+                    Application.DoEvents()
+
+                Next
+            End If
+
+        End If
+
+
+
+
+    End Sub
 
 End Class

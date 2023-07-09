@@ -31,12 +31,14 @@ Partial Class GUI
         Me.Label1 = New System.Windows.Forms.Label()
         Me.CheckedListBox1 = New System.Windows.Forms.CheckedListBox()
         Me.OpenFileDialog1 = New System.Windows.Forms.OpenFileDialog()
+        Me.Button1 = New System.Windows.Forms.Button()
+        Me.Button2 = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
         'Save_page_button
         '
         Me.Save_page_button.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
-        Me.Save_page_button.Location = New System.Drawing.Point(290, 218)
+        Me.Save_page_button.Location = New System.Drawing.Point(290, 264)
         Me.Save_page_button.Name = "Save_page_button"
         Me.Save_page_button.Size = New System.Drawing.Size(135, 38)
         Me.Save_page_button.TabIndex = 0
@@ -46,7 +48,7 @@ Partial Class GUI
         'Parse_links_button
         '
         Me.Parse_links_button.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
-        Me.Parse_links_button.Location = New System.Drawing.Point(150, 218)
+        Me.Parse_links_button.Location = New System.Drawing.Point(150, 264)
         Me.Parse_links_button.Name = "Parse_links_button"
         Me.Parse_links_button.Size = New System.Drawing.Size(120, 38)
         Me.Parse_links_button.TabIndex = 1
@@ -56,7 +58,7 @@ Partial Class GUI
         'Create_folder_button
         '
         Me.Create_folder_button.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
-        Me.Create_folder_button.Location = New System.Drawing.Point(11, 218)
+        Me.Create_folder_button.Location = New System.Drawing.Point(11, 264)
         Me.Create_folder_button.Name = "Create_folder_button"
         Me.Create_folder_button.Size = New System.Drawing.Size(113, 38)
         Me.Create_folder_button.TabIndex = 2
@@ -100,18 +102,38 @@ Partial Class GUI
         Me.CheckedListBox1.HorizontalScrollbar = True
         Me.CheckedListBox1.Location = New System.Drawing.Point(432, 12)
         Me.CheckedListBox1.Name = "CheckedListBox1"
-        Me.CheckedListBox1.Size = New System.Drawing.Size(169, 244)
+        Me.CheckedListBox1.Size = New System.Drawing.Size(169, 289)
         Me.CheckedListBox1.TabIndex = 6
         '
         'OpenFileDialog1
         '
         Me.OpenFileDialog1.FileName = "OpenFileDialog1"
         '
+        'Button1
+        '
+        Me.Button1.Location = New System.Drawing.Point(291, 220)
+        Me.Button1.Name = "Button1"
+        Me.Button1.Size = New System.Drawing.Size(135, 38)
+        Me.Button1.TabIndex = 7
+        Me.Button1.Text = "Run translate"
+        Me.Button1.UseVisualStyleBackColor = True
+        '
+        'Button2
+        '
+        Me.Button2.Location = New System.Drawing.Point(12, 220)
+        Me.Button2.Name = "Button2"
+        Me.Button2.Size = New System.Drawing.Size(75, 23)
+        Me.Button2.TabIndex = 8
+        Me.Button2.Text = "Button2"
+        Me.Button2.UseVisualStyleBackColor = True
+        '
         'GUI
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(609, 266)
+        Me.ClientSize = New System.Drawing.Size(609, 312)
+        Me.Controls.Add(Me.Button2)
+        Me.Controls.Add(Me.Button1)
         Me.Controls.Add(Me.CheckedListBox1)
         Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.ProgressBar1)
@@ -136,4 +158,6 @@ Partial Class GUI
     Friend WithEvents Label1 As Label
     Friend WithEvents CheckedListBox1 As CheckedListBox
     Friend WithEvents OpenFileDialog1 As OpenFileDialog
+    Friend WithEvents Button1 As Button
+    Friend WithEvents Button2 As Button
 End Class
