@@ -133,7 +133,7 @@ Public Class GUI
 
 
     'збереження html файлів з використанням Chrome та бібліотеки Selenium
-    Public Sub SavePageAsHtml(url As String, savePath As String, saveName As String)
+    Public Sub SavePageAsHtml(url As String, savePath As String)
 
         Dim options As New ChromeOptions()      'ініціалізація виклику браузера та опцій виклику
         Dim isDisplayed As Boolean = False      'змінна для перевірки відображення необхідного елементу сторінки
@@ -186,7 +186,7 @@ Public Class GUI
         If rootUl Is Nothing Then
 
             driver.Quit()
-            SavePageAsHtml(url, savePath, saveName)
+            SavePageAsHtml(url, savePath)
 
         Else
 
@@ -200,9 +200,7 @@ Public Class GUI
                 nodeToDelete.Remove()
             End If
 
-            savePath += "\" + saveName + ".html"
             htmlSave.Save(savePath)
-
 
             ' Close the browser
             driver.Quit()
@@ -431,7 +429,7 @@ Public Class GUI
     'тестовий виклик збереження певного файлу за певним посиланням
     Private Sub Save_page_button_Click(sender As Object, e As EventArgs) Handles Save_page_button.Click
 
-        SavePageAsHtml("https://help.autodesk.com/view/fusion360/ENU/?guid=Update_Desktop_Connector", "d:\test\", "asd")
+        SavePageAsHtml("https://help.autodesk.com/view/fusion360/ENU/?guid=Update_Desktop_Connector", "d:\test\123.html")
 
     End Sub
 
@@ -450,6 +448,8 @@ Public Class GUI
     Private Sub Run_all_Click(sender As Object, e As EventArgs) Handles Run_all.Click
 
         Dim count_rows As Integer
+        Dim savePath As String
+        Dim check_exist As Boolean
 
         parse_links()       'розбір файлу з посиланнями
 
@@ -459,15 +459,32 @@ Public Class GUI
         If FolderBrowserDialog1.ShowDialog() = DialogResult.OK Then
             Create_folders(FolderBrowserDialog1.SelectedPath)
 
+            Dim allFiles As IEnumerable(Of String) = Directory.EnumerateFiles(FolderBrowserDialog1.SelectedPath, "*.html", SearchOption.AllDirectories)
+            Dim filePaths As IList(Of String) = allFiles.ToList()
+
+
             'для кожного рядка виконання функції зберігання файлу
             If count_rows > 0 Then
                 For i = 0 To count_rows - 1
-                    If linksList(i) IsNot "null" Then
-                        SavePageAsHtml(linksList(i), FolderBrowserDialog1.SelectedPath & "\" & pathList(i), NamesList(i))       'виклик збереження сторінок
 
-                        'індикація процесу
-                        ProgressBar1.Value = Math.Round(100 * (i + 1) / count_rows)
-                        Label1.Text = CStr((i + 1) & " / " & count_rows)
+                    'індикація процесу
+                    ProgressBar1.Value = Math.Round(100 * (i + 1) / count_rows)
+                    Label1.Text = CStr((i + 1) & " / " & count_rows)
+
+                    If linksList(i) IsNot "null" Then
+
+                        savePath = FolderBrowserDialog1.SelectedPath & "\" & pathList(i) & "\" & NamesList(i) & ".html"
+                        check_exist = False
+
+                        For Each file As String In filePaths
+                            If file = savePath Then
+                                check_exist = True
+                            End If
+                        Next
+
+                        If check_exist = False Then
+                            SavePageAsHtml(linksList(i), savePath)       'виклик збереження сторінок
+                        End If
 
                         Application.DoEvents()
 
