@@ -183,22 +183,32 @@ Public Class GUI
         End While
 
 
-        ' зберігання файлу
-        htmlSave.DocumentNode.AppendChild(rootUl)
+        If rootUl Is Nothing Then
 
-        Dim nodeToDelete As HtmlNode = htmlSave.DocumentNode.SelectSingleNode("//div[@data-type='Sharing']")
+            driver.Quit()
+            SavePageAsHtml(url, savePath, saveName)
 
-        If nodeToDelete IsNot Nothing Then
-            ' Delete the node
-            nodeToDelete.Remove()
+        Else
+
+            ' зберігання файлу
+            htmlSave.DocumentNode.AppendChild(rootUl)
+
+            Dim nodeToDelete As HtmlNode = htmlSave.DocumentNode.SelectSingleNode("//div[@data-type='Sharing']")
+
+            If nodeToDelete IsNot Nothing Then
+                ' Delete the node
+                nodeToDelete.Remove()
+            End If
+
+            savePath += "\" + saveName + ".html"
+            htmlSave.Save(savePath)
+
+
+            ' Close the browser
+            driver.Quit()
+
         End If
 
-        savePath += "\" + saveName + ".html"
-        htmlSave.Save(savePath)
-
-
-        ' Close the browser
-        driver.Quit()
     End Sub
 
 
