@@ -14,17 +14,22 @@ Imports Google.Cloud.Translation.V2
 
 Imports MySql.Data.MySqlClient
 
+Imports System.Threading.Tasks
+
 Public Class GUI
 
     Dim pathList As New List(Of String)     'перелік шляхів всіх сторінок
+    Dim abs_pathList As New List(Of String)     'перелік повних шляхів всіх сторінок
     Dim linksList As New List(Of String)    'перелік посилань на сайт https://help.autodesk.com/
     Dim NamesList As New List(Of String)    'перелік назв сторінок
+    Dim guidlist As New List(Of String)    'перелік guid сторінок
 
     Const GoogleCloudApiKey = "AIzaSyA_lbC-g1PfLkg6nskzmd0tJ0NagGhQ-D0"
 
-    Dim connectionString As String = "server=localhost;user=lostsoul;password=elparol3572765;database=fusion_translate_db;"
+    Dim connectionString As String = "server=localhost;user=root;password=;database=f360_short;"
+    ' Dim connectionString As String = "server=localhost;user=root;password=;database=fusion_translate_db;"
 
-    Sub start_import(filePath As String, link As String)
+    Sub start_import(filePath As String, a_guid As String, link_name As String)
 
         Dim connection As New MySqlConnection(connectionString)
         Dim Filename As String
@@ -34,75 +39,169 @@ Public Class GUI
 
         Dim htmlContent As String               'документ, що обробляється
 
+        Using reader_html As New StreamReader(filePath, Encoding.Default)
+            ' Read the entire contents of the file
+            htmlContent = reader_html.ReadToEnd()
+        End Using
 
-        ' If OpenFileDialog1.ShowDialog = DialogResult.OK Then
-        '  filePath = OpenFileDialog1.FileName
-        '  Filename = OpenFileDialog1.SafeFileName
+        Dim htmlDoc As New HtmlDocument()
+        htmlDoc.LoadHtml(htmlContent)
 
+        ' отримання початкового елементу вкладеного переліку
+        Dim rootUl As HtmlNode = htmlDoc.DocumentNode.SelectSingleNode("//h1[@itemprop='name']")
 
-        Using reader1 As New StreamReader(filePath, Encoding.Default)
-                ' Read the entire contents of the file
-                htmlContent = reader1.ReadToEnd()
-            End Using
-
-            Dim htmlDoc As New HtmlDocument()
-            htmlDoc.LoadHtml(htmlContent)
-
-            ' отримання початкового елементу вкладеного переліку
-            Dim rootUl As HtmlNode = htmlDoc.DocumentNode.SelectSingleNode("//h1[@itemprop='name']")
-
+        If rootUl IsNot Nothing Then
             Filename = rootUl.InnerText
+        Else
+            Filename = ""
+        End If
 
-
-            Dim ID As String = "NULL"
-            Dim post_author As String = 1
-            Dim post_date As String = "2023-07-01 21:27:58"
-            Dim post_date_gmt As String = "2023-07-01 21:27:58"
-            Dim post_content As String = htmlContent
-            Dim post_title As String = Filename
-            Dim post_excerpt As String = ""
-            Dim post_status As String = "publish"
-            Dim comment_status As String = "closed"
-            Dim ping_status As String = "closed"
-            Dim post_password As String = ""
-            Dim post_name As String = link
-            Dim to_ping As String = ""
-            Dim pinged As String = ""
-            Dim post_modified As String = "2023-07-01 21:27:58"
-            Dim post_modified_gmt As String = "2023-07-01 21:27:58"
-            Dim post_content_filtered As String = ""
-            Dim post_parent As String = "7"
-            Dim guid As String = ""
-            Dim menu_order As String = "0"
-            Dim post_type As String = "page"
-            Dim post_mime_type As String = ""
-            Dim comment_count As String = "0"
+        Dim currentDate As DateTime = DateTime.Now
+        Dim formattedDate As String = currentDate.ToString("yyyy-MM-dd HH:mm:ss")
 
 
 
-            Dim query As String = "INSERT INTO `wp_posts` (`ID`, `post_author`, `post_date`, `post_date_gmt`, `post_content`, `post_title`, `post_excerpt`, `post_status`, `comment_status`, `ping_status`, `post_password`, `post_name`, `to_ping`, `pinged`, `post_modified`, `post_modified_gmt`, `post_content_filtered`, `post_parent`, `guid`, `menu_order`, `post_type`, `post_mime_type`, `comment_count`) 
-    VALUES (" & ID & ", '" & post_author & "', '" & post_date & "', '" & post_date_gmt & "', '" & post_content & "', '" & post_title & "', '" & post_excerpt & "', '" & post_status & "', '" & comment_status & "', '" & ping_status & "', '" & post_password & "', '" & post_name & "', '" & to_ping & "', '" & pinged & "', '" & post_modified & "', '" & post_modified_gmt & "', '" & post_content_filtered & "', '" & post_parent & "', '" & guid & "', '" & menu_order & "', '" & post_type & "', '" & post_mime_type & "', '" & comment_count & "');"
+        Dim ID As String = "NULL"
+        Dim post_author As Integer = 1
+        Dim post_date As String = formattedDate            '     "2023-07-01 21:27:58"
+        Dim post_date_gmt As String = formattedDate        '     "2023-07-01 21:27:58"
+        Dim post_content As String = htmlContent
+        Dim post_title As String = Filename
+        Dim post_excerpt As String = ""
+        Dim post_status As String = "publish"
+        Dim comment_status As String = "closed"
+        Dim ping_status As String = "closed"
+        Dim post_password As String = ""
+        Dim post_name As String = link_name
+        Dim to_ping As String = ""
+        Dim pinged As String = ""
+        Dim post_modified As String = formattedDate        '     "2023-07-01 21:27:58"
+        Dim post_modified_gmt As String = formattedDate    '     "2023-07-01 21:27:58"
+        Dim post_content_filtered As String = ""
+        Dim post_parent As String = "0"
+        Dim guid As String = ""
+        Dim menu_order As String = "0"
+        Dim post_type As String = "page"
+        Dim post_mime_type As String = ""
+        Dim comment_count As String = "0"
+        Dim adsk_guid As String = a_guid
 
-            Dim command As New MySqlCommand(query, connection)
-            Dim reader As MySqlDataReader = command.ExecuteReader()
-
-            reader.Close()
 
 
+        Dim query As String = "INSERT INTO `wp_posts` (`ID`, `post_author`, `post_date`, `post_date_gmt`, `post_content`, `post_title`, `post_excerpt`, `post_status`, `comment_status`, `ping_status`, `post_password`, `post_name`, `to_ping`, `pinged`, `post_modified`, `post_modified_gmt`, `post_content_filtered`, `post_parent`, `guid`, `menu_order`, `post_type`, `post_mime_type`, `comment_count`, `adsk_guid`) 
+        VALUES (" & ID & ", '" & post_author & "', '" & post_date & "', '" & post_date_gmt & "', '" & post_content & "', '" & post_title & "', '" & post_excerpt & "', '" & post_status & "', '" & comment_status & "', '" & ping_status & "', '" & post_password & "', '" & post_name & "', '" & to_ping & "', '" & pinged & "', '" & post_modified & "', '" & post_modified_gmt & "', '" & post_content_filtered & "', '" & post_parent & "', '" & guid & "', '" & menu_order & "', '" & post_type & "', '" & post_mime_type & "', '" & comment_count & "', '" & adsk_guid & "');"
 
-        ' End If
+        Dim command As New MySqlCommand(query, connection)
+        Dim reader As MySqlDataReader = command.ExecuteReader()
+
+        reader.Close()
+
 
     End Sub
 
 
+    Sub hierarchical_structure_SQL()
 
 
+        Dim connection As New MySqlConnection(connectionString)
+        Dim rowcount As Integer
+        Dim row_ID As Integer
+        Dim parent_ID As String
+        Dim parent_name As String
+        Dim parent_guid As String
+        Dim cur_file As Integer = 0
+
+        connection.Open()
+
+        Dim itemList As New List(Of String)()
+
+        'отримання таблиці
+        Dim query As String = "SELECT * FROM `wp_posts`;"
+
+        Using command As New MySqlCommand(query, connection)
+            Using reader As MySqlDataReader = command.ExecuteReader()
+                'отримання переліку значень стовпця adsk_guid 
+                While reader.Read()
+                    Dim item As String = reader.GetString("adsk_guid")
+                    itemList.Add(item)
+                End While
+            End Using
+        End Using
+
+        rowcount = guidlist.Count
+        Dim progress = itemList.Count
+
+        For Each item In itemList
+
+            Label1.Text = CStr((cur_file + 1) & " / " & progress)
+            ProgressBar1.Value = Math.Round(100 * (cur_file + 1) / progress)
+
+            parent_ID = 0
+
+            For i = 0 To rowcount - 1
+                If item = guidlist(i) Then
+                    parent_name = abs_pathList(i)
+                    Dim index As Integer = parent_name.LastIndexOf("\")
+                    Dim cut_part As Integer = parent_name.Length - index
+                    'видалення зайвої частини
+                    If index > 0 Then
+                        parent_name = parent_name.Remove(index, cut_part)
+                    End If
+                    Exit For
+                End If
+            Next
+
+            For i = 0 To rowcount - 1
+                If parent_name = abs_pathList(i) Then
+                    parent_guid = guidlist(i)
+                    Exit For
+                End If
+            Next
+
+            If parent_guid IsNot Nothing And parent_guid <> item Then
+
+                'пошук за значенням adsk_guid та отримання ID певного рядка
+                query = "SELECT * FROM `wp_posts` WHERE `adsk_guid` LIKE '" & parent_guid & "';"
+                Using command As New MySqlCommand(query, connection)
+
+                    Using reader As MySqlDataReader = command.ExecuteReader()
+                        If reader.Read() Then
+                            parent_ID = reader.GetString("ID")
+                        End If
+                    End Using
+                End Using
+
+                query = "SELECT * FROM `wp_posts` WHERE `adsk_guid` LIKE '" & item & "';"
+                Using command As New MySqlCommand(query, connection)
+
+                    Using reader As MySqlDataReader = command.ExecuteReader()
+                        If reader.Read() Then
+                            row_ID = reader.GetString("ID")
+                        End If
+                    End Using
+                End Using
+
+                'оновлення значення батьківського посту
+                '   query = "UPDATE `wp_posts` SET `post_parent` = '7' WHERE `wp_posts`.`ID` = 61;"
+                query = "UPDATE `wp_posts` SET `post_parent` = '" & parent_ID & "' WHERE `wp_posts`.`ID` = " & row_ID & ";"
+                Using command As New MySqlCommand(query, connection)
+                    Using reader As MySqlDataReader = command.ExecuteReader()
+                    End Using
+                End Using
 
 
+            End If
+
+            cur_file += 1
+
+            Application.DoEvents()
+        Next
 
 
+        ' reader.Close()
+        connection.Close()
 
-
+    End Sub
 
 
 
@@ -116,10 +215,46 @@ Public Class GUI
         translateClient = TranslationClient.CreateFromApiKey(GoogleCloudApiKey)
 
 
-        response = translateClient.TranslateHtml(htmlContent, LanguageCodes.Ukrainian)
+        Dim chunks As New List(Of String)()
+        Dim chunkSize As Integer = 100000
 
-        temp_row = response.TranslatedText
+        Dim encoding As Encoding = Encoding.Default
 
+        Dim byteCount As Integer = encoding.GetByteCount(htmlContent)
+
+        If byteCount < chunkSize Then
+
+            response = translateClient.TranslateHtml(htmlContent, LanguageCodes.Ukrainian)
+
+            temp_row = response.TranslatedText
+
+        Else
+
+            Dim startIndex As Integer = 0
+            Dim endIndex As Integer = chunkSize
+            temp_row = ""
+
+            While startIndex < htmlContent.Length
+
+                If endIndex > htmlContent.Length Then
+                    endIndex = htmlContent.Length
+                End If
+
+
+                chunks.Add(htmlContent.Substring(startIndex, endIndex - startIndex))
+
+                startIndex = endIndex
+                endIndex += chunkSize
+            End While
+
+            For Each chunk In chunks
+
+                response = translateClient.TranslateHtml(chunk, LanguageCodes.Ukrainian)
+                temp_row += response.TranslatedText
+
+            Next
+
+        End If
 
         ' зберігання файлу
         htmlSave.LoadHtml(temp_row)
@@ -128,8 +263,6 @@ Public Class GUI
 
 
     End Sub
-
-
 
 
     'збереження html файлів з використанням Chrome та бібліотеки Selenium
@@ -160,7 +293,7 @@ Public Class GUI
             Dim html As String = driver.PageSource
             htmlDoc.LoadHtml(html)
             'обирання вузла з текстом
-            rootUl = htmlDoc.DocumentNode.SelectSingleNode("//div[@class='body_content']")
+            rootUl = htmlDoc.DocumentNode.SelectSingleNode("//div[@Class='body_content']")
             'перевірка на наявність вмісту
             If rootUl IsNot Nothing Then
                 isDisplayed = True
@@ -211,13 +344,21 @@ Public Class GUI
 
 
     'рекурсивний пошук вкладених елементів
-    Private Shared Function GetPathList(node As HtmlNode, Optional parentPath As String = "") As (List(Of String), List(Of String), List(Of String))
+    'Private Shared Function GetPathList(node As HtmlNode, Optional parentPath As String = "") As (List(Of String), List(Of String), List(Of String), List(Of String))
+    Private Shared Function GetPathList(node As HtmlNode, Optional parentPath As String = "") As Tuple(Of List(Of String), List(Of String), List(Of String), List(Of String))
         'оголошення відповідних переліків для парсингу
         Dim pathList_f As New List(Of String)()
         Dim LinksList_f As New List(Of String)()
         Dim NamesList_f As New List(Of String)()
+        Dim guidList_f As New List(Of String)()
         'ім'я поточного вузла
         Dim nodeText As String
+        Dim guid_text As String
+
+
+        guid_text = node.GetAttributeValue("data-id", "null")
+
+        guidList_f.Add(guid_text)
 
         'отримання колекції вузлів поточного вузла для пошуку елементу, який відповідає за ім'я
         Dim Childs_nodes As HtmlNodeCollection = node.ChildNodes
@@ -253,9 +394,21 @@ Public Class GUI
                 'пошук вкладених вузлів
                 For Each node_ul As HtmlNode In Childs_UL
                     If node_ul.Name = "li" Then
-                        pathList_f.AddRange(GetPathList(node_ul, path).Item1)
-                        LinksList_f.AddRange(GetPathList(node_ul, path).Item2)
-                        NamesList_f.AddRange(GetPathList(node_ul, path).Item3)
+                        'pathList_f.AddRange(GetPathList(node_ul, path).Item1)
+                        'LinksList_f.AddRange(GetPathList(node_ul, path).Item2)
+                        'NamesList_f.AddRange(GetPathList(node_ul, path).Item3)
+                        'guidList_f.AddRange(GetPathList(node_ul, path).Item4)
+
+
+                        Dim result As Tuple(Of List(Of String), List(Of String), List(Of String), List(Of String)) = GetPathList(node_ul, path)
+
+                        pathList_f.AddRange(result.Item1)
+                        LinksList_f.AddRange(result.Item2)
+                        NamesList_f.AddRange(result.Item3)
+                        guidList_f.AddRange(result.Item4)
+
+
+
                     End If
                 Next
 
@@ -263,16 +416,19 @@ Public Class GUI
         Next
 
         ' повернення сформованих переліків
-        Return (pathList_f, LinksList_f, NamesList_f)
+        ' Return (pathList_f, LinksList_f, NamesList_f, guidList_f)
+        Return Tuple.Create(pathList_f, LinksList_f, NamesList_f, guidList_f)
+
     End Function
 
 
     'функція пошуку коренних вузлів переліку у html документі
-    Public Shared Function ConvertToPathList(html As String) As (List(Of String), List(Of String), List(Of String))
+    Public Shared Function ConvertToPathList(html As String) As Tuple(Of List(Of String), List(Of String), List(Of String), List(Of String))
         'оголошення відповідних переліків для парсингу
         Dim pathList_f As New List(Of String)()
         Dim linksList_f As New List(Of String)()
         Dim NamesList_f As New List(Of String)()
+        Dim guidlist_f As New List(Of String)()
 
         ' Parse the HTML string into an HTML document
         Dim htmlDoc As New HtmlDocument()
@@ -287,14 +443,25 @@ Public Class GUI
         'для кожного вузла, виклик рекурсивного пошуку, якщо вузол має необхідку назву
         For Each node As HtmlNode In Childs_nodes
             If node.Name = "li" Then
-                pathList_f.AddRange(GetPathList(node).Item1)
-                linksList_f.AddRange(GetPathList(node).Item2)
-                NamesList_f.AddRange(GetPathList(node).Item3)
+                'pathList_f.AddRange(GetPathList(node).Item1)
+                'linksList_f.AddRange(GetPathList(node).Item2)
+                'NamesList_f.AddRange(GetPathList(node).Item3)
+                'guidlist_f.AddRange(GetPathList(node).Item4)
+                Dim result As Tuple(Of List(Of String), List(Of String), List(Of String), List(Of String)) = GetPathList(node)
+
+                pathList_f.AddRange(result.Item1)
+                linksList_f.AddRange(result.Item2)
+                NamesList_f.AddRange(result.Item3)
+                guidlist_f.AddRange(result.Item4)
+
+
+                Application.DoEvents()
             End If
         Next
 
         ' повернення сформованих переліків
-        Return (pathList_f, linksList_f, NamesList_f)
+        ' Return (pathList_f, linksList_f, NamesList_f, guidlist_f)
+        Return Tuple.Create(pathList_f, linksList_f, NamesList_f, guidlist_f)
 
     End Function
 
@@ -317,6 +484,7 @@ Public Class GUI
         pathList.Clear()
         linksList.Clear()
         NamesList.Clear()
+        guidlist.Clear()
 
         ' Create a StreamReader object to read the file
         Using reader As New StreamReader(filePath)
@@ -325,10 +493,19 @@ Public Class GUI
         End Using
 
         'виклик рекурсивної функції парсингу 
-        pathList = ConvertToPathList(htmlContent).Item1
-        linksList = ConvertToPathList(htmlContent).Item2
-        NamesList = ConvertToPathList(htmlContent).Item3
+        'pathList = ConvertToPathList(htmlContent).Item1
+        'linksList = ConvertToPathList(htmlContent).Item2
+        'NamesList = ConvertToPathList(htmlContent).Item3
+        'guidlist = ConvertToPathList(htmlContent).Item4
 
+        Dim result As Tuple(Of List(Of String), List(Of String), List(Of String), List(Of String)) = ConvertToPathList(htmlContent)
+
+        pathList = result.Item1
+        linksList = result.Item2
+        NamesList = result.Item3
+        guidlist = result.Item4
+
+        abs_pathList = pathList
 
         Dim count_rows As Integer = pathList.Count
 
@@ -382,7 +559,6 @@ Public Class GUI
                     modifiedString = pathList(i)
                     myList.Add(modifiedString)
                 End If
-
             Next
         End If
 
@@ -488,6 +664,36 @@ Public Class GUI
 
                         Application.DoEvents()
 
+                    Else
+
+                        If pathList(i) = "" Then
+                            savePath = FolderBrowserDialog1.SelectedPath & "\" & NamesList(i) & ".html"
+                        Else
+                            savePath = FolderBrowserDialog1.SelectedPath & "\" & pathList(i) & "\" & NamesList(i) & ".html"
+                        End If
+
+
+                        check_exist = False
+
+                        For Each file As String In filePaths
+                            If file = savePath Then
+                                check_exist = True
+                            End If
+                        Next
+
+                        If check_exist = False Then
+
+                            Dim htmlContent As String = "<div class=""body_content"" id=""body-content""><div class=""head-block""><h1 itemprop=""name"">" & NamesList(i) & "</h1></div>"
+
+                            Using writer As New StreamWriter(savePath)
+                                ' Write the HTML content to the file
+                                writer.Write(htmlContent)
+                            End Using
+
+                        End If
+
+
+
                     End If
                 Next
             End If
@@ -521,6 +727,9 @@ Public Class GUI
                 For Each filePath As String In filePaths
 
                     Label1.Text = CStr((cur_file + 1) & " / " & files_count)
+                    ProgressBar1.Value = Math.Round(100 * (cur_file + 1) / files_count)
+
+
 
                     Using reader As New StreamReader(filePath)
                         ' Read the entire contents of the file
@@ -547,13 +756,18 @@ Public Class GUI
 
     End Sub
 
-    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles SQL_Import.Click
 
         Dim files_count As Integer
         Dim cur_file As Integer = 0
         Dim rowcount As Integer
-        Dim link As String
+        Dim link_name As String
+        Dim guid As String
+        Dim file_name As String
+        Dim checked_path As String
 
+
+        parse_links()
 
         'діалог відкриття файлу
         If FolderBrowserDialog1.ShowDialog() = DialogResult.OK Then
@@ -562,7 +776,6 @@ Public Class GUI
             Dim allFiles As IEnumerable(Of String) = Directory.EnumerateFiles(FolderBrowserDialog1.SelectedPath, "*.html", SearchOption.AllDirectories)
             Dim filePaths As IList(Of String) = allFiles.ToList()
 
-            Create_folders(FolderBrowserDialog1.SelectedPath & "_ukrainian")
 
             files_count = filePaths.Count
             rowcount = NamesList.Count
@@ -573,17 +786,29 @@ Public Class GUI
                 For Each filePath As String In filePaths
 
                     Label1.Text = CStr((cur_file + 1) & " / " & files_count)
+                    ProgressBar1.Value = Math.Round(100 * (cur_file + 1) / files_count)
+
+
+                    '  Dim index As Integer = filePath.LastIndexOf("\")
+                    'видалення зайвої частини
+                    '  file_name = filePath.Remove(0, index + 1)
+                    file_name = filePath.Replace(FolderBrowserDialog1.SelectedPath & "\", "")
 
 
                     For i = 0 To rowcount - 1
 
+                        checked_path = abs_pathList(i) & ".html"
 
+                        If file_name = checked_path Then
 
+                            guid = guidlist(i)
+                            link_name = NamesList(i).Replace(" ", "_")
+                            link_name = link_name.ToLower()
+                            link_name = Regex.Replace(link_name, "[^a-zA-Z0-9_]", "")
+                            start_import(filePath, guid, link_name)
+                        End If
 
                     Next
-
-
-                    start_import(filePath, link)
 
                     cur_file += 1
 
@@ -595,8 +820,33 @@ Public Class GUI
         End If
 
 
+    End Sub
 
+    Private Sub Sort_sql_Click(sender As Object, e As EventArgs) Handles Sort_sql.Click
+
+        parse_links()
+        hierarchical_structure_SQL()
 
     End Sub
 
+    Private Sub Button2_Click_1(sender As Object, e As EventArgs) Handles Button2.Click
+
+        Dim filePath As String = "C:\Users\Lost\Desktop\Fusion help\Electronics\Reference\Electronics command-line reference.html"
+        Dim htmlContent As String
+        Dim chunks As New List(Of String)()
+        Dim chunkSize As Integer = 180000
+
+
+        Using reader As New StreamReader(filePath)
+            ' Read the entire contents of the file
+            htmlContent = reader.ReadToEnd()
+        End Using
+
+
+        translate(htmlContent, "D:\test\splited.html")
+
+
+
+
+    End Sub
 End Class

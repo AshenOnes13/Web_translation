@@ -32,13 +32,15 @@ Partial Class GUI
         Me.CheckedListBox1 = New System.Windows.Forms.CheckedListBox()
         Me.OpenFileDialog1 = New System.Windows.Forms.OpenFileDialog()
         Me.Button1 = New System.Windows.Forms.Button()
+        Me.SQL_Import = New System.Windows.Forms.Button()
+        Me.Sort_sql = New System.Windows.Forms.Button()
         Me.Button2 = New System.Windows.Forms.Button()
         Me.SuspendLayout()
         '
         'Save_page_button
         '
         Me.Save_page_button.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
-        Me.Save_page_button.Location = New System.Drawing.Point(290, 264)
+        Me.Save_page_button.Location = New System.Drawing.Point(290, 310)
         Me.Save_page_button.Name = "Save_page_button"
         Me.Save_page_button.Size = New System.Drawing.Size(135, 38)
         Me.Save_page_button.TabIndex = 0
@@ -48,7 +50,7 @@ Partial Class GUI
         'Parse_links_button
         '
         Me.Parse_links_button.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
-        Me.Parse_links_button.Location = New System.Drawing.Point(150, 264)
+        Me.Parse_links_button.Location = New System.Drawing.Point(150, 310)
         Me.Parse_links_button.Name = "Parse_links_button"
         Me.Parse_links_button.Size = New System.Drawing.Size(120, 38)
         Me.Parse_links_button.TabIndex = 1
@@ -58,7 +60,7 @@ Partial Class GUI
         'Create_folder_button
         '
         Me.Create_folder_button.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
-        Me.Create_folder_button.Location = New System.Drawing.Point(11, 264)
+        Me.Create_folder_button.Location = New System.Drawing.Point(11, 310)
         Me.Create_folder_button.Name = "Create_folder_button"
         Me.Create_folder_button.Size = New System.Drawing.Size(113, 38)
         Me.Create_folder_button.TabIndex = 2
@@ -102,7 +104,7 @@ Partial Class GUI
         Me.CheckedListBox1.HorizontalScrollbar = True
         Me.CheckedListBox1.Location = New System.Drawing.Point(432, 12)
         Me.CheckedListBox1.Name = "CheckedListBox1"
-        Me.CheckedListBox1.Size = New System.Drawing.Size(169, 289)
+        Me.CheckedListBox1.Size = New System.Drawing.Size(169, 334)
         Me.CheckedListBox1.TabIndex = 6
         '
         'OpenFileDialog1
@@ -111,19 +113,40 @@ Partial Class GUI
         '
         'Button1
         '
-        Me.Button1.Location = New System.Drawing.Point(291, 220)
+        Me.Button1.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
+        Me.Button1.Location = New System.Drawing.Point(291, 266)
         Me.Button1.Name = "Button1"
         Me.Button1.Size = New System.Drawing.Size(135, 38)
         Me.Button1.TabIndex = 7
         Me.Button1.Text = "Run translate"
         Me.Button1.UseVisualStyleBackColor = True
         '
+        'SQL_Import
+        '
+        Me.SQL_Import.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
+        Me.SQL_Import.Location = New System.Drawing.Point(12, 266)
+        Me.SQL_Import.Name = "SQL_Import"
+        Me.SQL_Import.Size = New System.Drawing.Size(112, 38)
+        Me.SQL_Import.TabIndex = 8
+        Me.SQL_Import.Text = "Import to SQL"
+        Me.SQL_Import.UseVisualStyleBackColor = True
+        '
+        'Sort_sql
+        '
+        Me.Sort_sql.Anchor = CType((System.Windows.Forms.AnchorStyles.Bottom Or System.Windows.Forms.AnchorStyles.Left), System.Windows.Forms.AnchorStyles)
+        Me.Sort_sql.Location = New System.Drawing.Point(150, 266)
+        Me.Sort_sql.Name = "Sort_sql"
+        Me.Sort_sql.Size = New System.Drawing.Size(120, 38)
+        Me.Sort_sql.TabIndex = 9
+        Me.Sort_sql.Text = "Sort SQL"
+        Me.Sort_sql.UseVisualStyleBackColor = True
+        '
         'Button2
         '
-        Me.Button2.Location = New System.Drawing.Point(12, 220)
+        Me.Button2.Location = New System.Drawing.Point(12, 227)
         Me.Button2.Name = "Button2"
         Me.Button2.Size = New System.Drawing.Size(75, 23)
-        Me.Button2.TabIndex = 8
+        Me.Button2.TabIndex = 10
         Me.Button2.Text = "Button2"
         Me.Button2.UseVisualStyleBackColor = True
         '
@@ -131,8 +154,10 @@ Partial Class GUI
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(609, 312)
+        Me.ClientSize = New System.Drawing.Size(609, 358)
         Me.Controls.Add(Me.Button2)
+        Me.Controls.Add(Me.Sort_sql)
+        Me.Controls.Add(Me.SQL_Import)
         Me.Controls.Add(Me.Button1)
         Me.Controls.Add(Me.CheckedListBox1)
         Me.Controls.Add(Me.Label1)
@@ -159,5 +184,7 @@ Partial Class GUI
     Friend WithEvents CheckedListBox1 As CheckedListBox
     Friend WithEvents OpenFileDialog1 As OpenFileDialog
     Friend WithEvents Button1 As Button
+    Friend WithEvents SQL_Import As Button
+    Friend WithEvents Sort_sql As Button
     Friend WithEvents Button2 As Button
 End Class
